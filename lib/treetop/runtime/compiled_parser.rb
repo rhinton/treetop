@@ -61,6 +61,8 @@ module Treetop
         @regexps = {}
         @terminal_failures = []
         @max_terminal_failure_index = 0
+        @stack = @stack || CallStack.new
+        @stack.reset
       end
       
       def reset_index
