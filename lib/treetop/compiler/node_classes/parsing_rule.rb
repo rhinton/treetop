@@ -32,6 +32,7 @@ module Treetop
             builder.newline
             generate_cache_storage(builder, result_var)
           end
+          builder << "@stack.pop"
           builder.newline
           builder << result_var
         end
@@ -43,11 +44,11 @@ module Treetop
           #builder << '@index = cached.interval.end if cached'
           #builder << 'return cached'
           builder.if__ "cached.kind_of? LeftRecursion" do
-            builder << 'cached.found(@stack.involved_set(cached))'
+            builder << 'cached.found(@stack.involved_recursions(cached))'
             builder << 'return nil'
           end
           builder.else_ do 
-            builder << '@index = cached.interval.end'
+            builder << '@index = cached.interval.end if cached'
             builder << 'return cached'
           end
         end
@@ -60,7 +61,7 @@ module Treetop
 
       def generate_left_recursion_update(builder, result_var)
         builder.if_ 'lrec.active?' do
-          builder.assign 'lrec.state', ':no_recursion'
+          builder << 'lrec.report_to_parents if lrec.seed_parse?'
           builder.if__ result_var do
             builder.if__ "#{result_var}.interval.end > node_cache[:#{name}][start_index].interval.end" do
               builder.assign 'lrec.state', ':grow_lr'
@@ -68,17 +69,19 @@ module Treetop
               builder << 'lrec.uncache_involved_rules(node_cache, start_index)'
             end
             builder.else_ do
+              builder.assign 'lrec.state', ':no_recursion'
               builder.assign result_var, "node_cache[:#{name}][start_index]"
               builder.assign '@index', "#{result_var}.interval.end"
               builder << 'lrec.restore_involved_rules(node_cache, start_index)'
             end
           end
           builder.else_ do
-            builder.if_ '!recursion.seed_parse?' do
+            builder.if_ '!lrec.seed_parse?' do
               builder.assign result_var, "node_cache[:#{name}][start_index]"
               builder.assign '@index', "#{result_var}.interval.end"
               builder << 'lrec.restore_involved_rules(node_cache, start_index)'
             end
+            builder.assign 'lrec.state', ':no_recursion'
           end
         end
       end

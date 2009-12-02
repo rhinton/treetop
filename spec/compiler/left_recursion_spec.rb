@@ -108,9 +108,9 @@ module LeftRecursionSpec
           }
         end
         rule b
-          "ab" {
+          "b" {
             def sexp
-              "(b 'ab)"
+              "(b 'b)"
             end
           }
         end
@@ -118,13 +118,13 @@ module LeftRecursionSpec
     }
 
     it "drops to the seed parse" do
-      parse('acab').sexp.should == "(top (a.3 'ac) (b 'ab))"
+      parse('acb').sexp.should == "(top (a.3 'ac) (b 'b))"
     end
 
     it "backtracks according to priority" do
-      parse('acaab').sexp.should == "(top (a.2 (a.3 'ac) 'a) (b 'ab))"
-      parse('acaaab').sexp.should == "(top (a.1 (a.3 'ac) 'aa) (b 'ab))"
-      parse('acaaaab').sexp.should == "(top (a.1 (a.2 (a.3 'ac) 'a) 'aa) (b 'ab))"
+      parse('acab').sexp.should == "(top (a.2 (a.3 'ac) 'a) (b 'b))"
+      parse('acaab').sexp.should == "(top (a.1 (a.3 'ac) 'aa) (b 'b))"
+      parse('acaaab').sexp.should == "(top (a.2 (a.1 (a.3 'ac) 'aa) 'a) (b 'b))"
     end
   end
 
@@ -132,11 +132,7 @@ module LeftRecursionSpec
     testing_grammar %{
       grammar SubLR
         rule x
-          expr {
-            def value
-              expr.value
-            end
-          }
+          expr
         end
         rule expr
           x "-" num {
@@ -144,16 +140,17 @@ module LeftRecursionSpec
               x.value - num.value
             end
           }
-          / num {
-            def value
-              num.value
-            end
-          }
+          / num
         end
         rule num
-          ([1-9]* [0-9]) {
+          [1-9] [0-9]* {
             def value
               text_value.to_i
+            end
+          }
+          / "0" {
+            def value
+              0
             end
           }
         end
