@@ -2,7 +2,7 @@ require File.expand_path("#{File.dirname(__FILE__)}/../spec_helper")
 
 module LeftRecursionSpec
   describe "Simple direct left recursion" do
-    testing_grammar %{
+    testing_grammar %q{
       grammar LRDirect
         rule lr
           lr "l" / "l"
@@ -22,7 +22,7 @@ module LeftRecursionSpec
 
   describe "Direct left recursion backtracking" do
     # compare BacktrackLR1 from http://www.tinlizzie.org/ometa-js/#LeftRecursionFiddling
-    testing_grammar %{
+    testing_grammar %q{
       grammar BacktrackLR1 
         rule top
           a b {
@@ -59,29 +59,16 @@ module LeftRecursionSpec
     }
 
     it "fails all the time because of the priority of PEG rules" do
-      parse('aaab').sexp.should_be_nil
-      parse('aaaab').sexp.should_be_nil
-      parse('aaaaab').sexp.should_be_nil
-      parse('aaaaaab').sexp.should_be_nil
+      parse('aaab').should be_nil
+      parse('aaaab').should be_nil
+      parse('aaaaab').should be_nil
+      parse('aaaaaab').should be_nil
     end
-
-    #it "drops down to the seed parse" do
-    #  parse('aaab').sexp.should == "(top (a.3 'aa) (b 'ab))"
-    #end
-    #
-    #it "backtracks when necessary to complete the parse" do
-    #  parse('aaaab').sexp.should == "(top (a.2 (a.3 'aa) 'a) (b 'ab))"
-    #end
-    #
-    #it "follows the (earliest) highest-priority left-recursive path" do
-    #  parse('aaaaab').sexp.should == "(top (a.1 (a.3 'aa) 'aa) (b 'ab))"
-    #  parse('aaaaaab').sexp.should == "(top (a.1 (a.2 (a.3 'aa) 'a) 'aa) (b 'ab))"
-    #end
   end
 
   describe "Direct left recursion backtracking (2)" do
     # compare BacktrackLR2 from http://www.tinlizzie.org/ometa-js/#LeftRecursionFiddling
-    testing_grammar %{
+    testing_grammar %q{
       grammar BacktrackLR2
         rule top
           a b {
@@ -129,7 +116,7 @@ module LeftRecursionSpec
   end
 
   describe "Indirect left recursion (subtraction expressions)" do
-    testing_grammar %{
+    testing_grammar %q{
       grammar SubLR
         rule x
           expr
@@ -176,7 +163,7 @@ module LeftRecursionSpec
   end
 
   describe "Indirect recursion across multiple choices" do
-    testing_grammar %{
+    testing_grammar %q{
       grammar MultiChoiceLR
         rule top
           ad {
@@ -237,25 +224,25 @@ module LeftRecursionSpec
     end
 
     it "rejects some strings not in the grammar" do
-      parse('b').sexp.should_be_nil
-      parse('c').sexp.should_be_nil
-      parse('d').sexp.should_be_nil
-      parse('cb').sexp.should_be_nil
-      parse('cc').sexp.should_be_nil
-      parse('bddd').sexp.should_be_nil
-      parse('ccdd').sexp.should_be_nil
-      parse('cbc').sexp.should_be_nil
-      parse('cbbcbb').sexp.should_be_nil
+      parse('b').should be_nil
+      parse('c').should be_nil
+      parse('d').should be_nil
+      parse('cb').should be_nil
+      parse('cc').should be_nil
+      parse('bddd').should be_nil
+      parse('ccdd').should be_nil
+      parse('cbc').should be_nil
+      parse('cbbcbb').should be_nil
     end
   end
 
   describe "Indirect recursion with choices across multiple levels" do
-    test_grammar %{
+    testing_grammar %q{
       grammar MultiDeepLR
         rule top
           a {
             def sexp
-              "(top #{a.sexp})"
+              "(top #{super})"
             end
           }
         end
@@ -274,7 +261,7 @@ module LeftRecursionSpec
           }
           / c "b" {
             def sexp
-              "(b.2 #{c.sexp}) 'b)"
+              "(b.2 #{c.sexp} 'b)"
             end
           }
           / "b" {
@@ -282,6 +269,7 @@ module LeftRecursionSpec
               "(b.3 'b)"
             end
           }
+        end
         rule c
           c "c" {
             def sexp
@@ -300,13 +288,13 @@ module LeftRecursionSpec
     it "parses correctly" do
       parse('ba').sexp.should == "(top (a (b.3 'b) 'a))"
       parse('cba').sexp.should == "(top (a (b.2 (c.2 'c) 'b) 'a))"
-      parse('ccba').sexp.should == "(top (a (b.2 (c.1 (c.2 'c)) 'b) 'a))"
+      parse('ccba').sexp.should == "(top (a (b.2 (c.1 (c.2 'c) 'c) 'b) 'a))"
       parse('baba').sexp.should == "(top (a (b.1 (a (b.3 'b) 'a) 'b) 'a))"
     end
   end
 
   describe "Mixed left and right recursion" do
-    test_grammar %{
+    testing_grammar %q{
       grammar MixedLeftRight
         rule top
           l r {
@@ -342,11 +330,239 @@ module LeftRecursionSpec
       end
     }
 
-    it "parses correctly with left-recursion dominant" do
-      parse('a').sexp.should_be_nil
-      parse('aa').sexp.should == "(top (l 'a) (r 'a))"
-      parse('aaa').sexp.should == "(top (l (l 'a) 'a) (r 'a))"
+    it "always fails due to greedy PEG semantics" do 
+      parse('a').should be_nil
+      parse('aa').should be_nil
+      parse('aaa').should be_nil
     end
   end
   
+  describe "Circular left recursion with no termination" do
+    testing_grammar %q{
+      grammar CircularLR
+        rule a 
+          b "a" / c "a"
+        end
+        rule b
+          c "b" / a "b"
+        end
+        rule c
+          a "c" / b "c"
+        end
+      end
+    }
+
+    it "should fail gracefully for any finite-length input (no infinite loops)" do
+      parse('a').should be_nil
+      parse('ba').should be_nil
+      parse('cba').should be_nil
+      parse('ababcacba').should be_nil
+    end
+  end
+
+
+  describe "Circular left recursion with termination" do
+    testing_grammar %q{
+      grammar CircularLR2
+        rule a 
+          b "a" / c "a" 
+        end
+      
+        rule b
+          c "b" / a "b" 
+        end
+      
+        rule c
+          a "c" / b "c" / "c"
+        end
+      end
+    }
+
+    it "should fail for non-matching strings" do
+      parse('a').should be_nil
+      parse('ba').should be_nil
+      parse('ababcacba').should be_nil
+    end
+  
+    it "should fail for non-matching strings" do
+      parse('cba').should_not be_nil
+      parse('cabcbaba').should_not be_nil
+      parse('cbcbcba').should_not be_nil
+      parse('cacacacba').should_not be_nil
+    end
+  end
+
+
+  describe "Mutual left-recursion" do
+    testing_grammar %q{
+      grammar MutualLR
+        rule top
+          b
+        end
+      
+        rule a
+          b "a" {
+            def sexp
+              "(a #{b.sexp})"
+            end
+          }
+          / c "a" {
+            def sexp
+              "(a #{c.sexp})"
+            end
+          }
+          / d "a" {
+            def sexp
+              "(a #{d.sexp})"
+            end
+          }
+        end
+      
+        rule b
+          a "b" {
+            def sexp
+              "(b #{a.sexp})"
+            end
+          }
+          / c "b" {
+            def sexp
+              "(b #{c.sexp})"
+            end
+          }
+          / "b" {
+            def sexp
+              "(b)"
+            end
+          }
+        end
+      
+        rule c
+          a "c" {
+            def sexp
+              "(c #{a.sexp})"
+            end
+          }
+        end
+      
+        rule d
+          "d" {
+            def sexp
+              "(d)"
+            end
+          }
+        end
+      end
+    }
+      
+    it "properly parses matching strings" do
+      parse('b').sexp.should      == "(b)"
+      parse('dacb').sexp.should   == "(b (c (a (d))))"
+      parse('bacacb').should      be_nil
+      parse('bacb').sexp.should   == "(b (c (a (b))))"
+      parse('dab').sexp.should    == "(b (a (d)))"
+      parse('bacab').should       be_nil
+      parse('bab').sexp.should    == "(b (a (b)))"
+      
+      parse('dacacb').should be_nil
+      parse('dacbacb').sexp.should    == "(b (c (a (b (c (a (d)))))))"
+      parse('dacbab').sexp.should     == "(b (a (b (c (a (d))))))"
+      parse('dabacb').sexp.should     == "(b (c (a (b (a (d))))))"
+      parse('dabab').sexp.should      == "(b (a (b (a (d)))))"
+      parse('bacacb').should          be_nil
+      parse('bacbacb').sexp.should    == "(b (c (a (b (c (a (b)))))))"
+      parse('babacb').sexp.should     == "(b (c (a (b (a (b))))))"
+      parse('bacbab').sexp.should     == "(b (a (b (c (a (b))))))"
+      parse('babab').sexp.should      == "(b (a (b (a (b)))))"
+      parse('bacacacb').should        be_nil
+      parse('bacbacbacb').sexp.should == "(b (c (a (b (c (a (b (c (a (b))))))))))"
+    end
+  
+    it "fails for strings not parsed by the grammar" do
+      parse('a').should be_nil
+      #parse('b').should be_nil
+      parse('c').should be_nil
+      parse('d').should be_nil
+      parse('aa').should be_nil
+      parse('ab').should be_nil
+      parse('ac').should be_nil
+      parse('ad').should be_nil
+      parse('ba').should be_nil
+      parse('bb').should be_nil
+      parse('bc').should be_nil
+      parse('bd').should be_nil
+      parse('ca').should be_nil
+      parse('cb').should be_nil
+      parse('cc').should be_nil
+      parse('cd').should be_nil
+      parse('da').should be_nil
+      parse('db').should be_nil
+      parse('dc').should be_nil
+      parse('dd').should be_nil
+      parse('aaa').should be_nil
+      parse('aab').should be_nil
+      parse('aac').should be_nil
+      parse('aad').should be_nil
+      parse('aba').should be_nil
+      parse('abb').should be_nil
+      parse('abc').should be_nil
+      parse('abd').should be_nil
+      parse('aca').should be_nil
+      parse('acb').should be_nil
+      parse('acc').should be_nil
+      parse('acd').should be_nil
+      parse('ada').should be_nil
+      parse('adb').should be_nil
+      parse('adc').should be_nil
+      parse('add').should be_nil
+      parse('baa').should be_nil
+      #parse('bab').should be_nil
+      parse('bac').should be_nil
+      parse('bad').should be_nil
+      parse('bba').should be_nil
+      parse('bbb').should be_nil
+      parse('bbc').should be_nil
+      parse('bbd').should be_nil
+      parse('bca').should be_nil
+      parse('bcb').should be_nil
+      parse('bcc').should be_nil
+      parse('bcd').should be_nil
+      parse('bda').should be_nil
+      parse('bdb').should be_nil
+      parse('bdc').should be_nil
+      parse('bdd').should be_nil
+      parse('caa').should be_nil
+      parse('cab').should be_nil
+      parse('cac').should be_nil
+      parse('cad').should be_nil
+      parse('cba').should be_nil
+      parse('cbb').should be_nil
+      parse('cbc').should be_nil
+      parse('cbd').should be_nil
+      parse('cca').should be_nil
+      parse('ccb').should be_nil
+      parse('ccc').should be_nil
+      parse('ccd').should be_nil
+      parse('cda').should be_nil
+      parse('cdb').should be_nil
+      parse('cdc').should be_nil
+      parse('cdd').should be_nil
+      parse('daa').should be_nil
+      #parse('dab').should be_nil
+      parse('dac').should be_nil
+      parse('dad').should be_nil
+      parse('dba').should be_nil
+      parse('dbb').should be_nil
+      parse('dbc').should be_nil
+      parse('dbd').should be_nil
+      parse('dca').should be_nil
+      parse('dcb').should be_nil
+      parse('dcc').should be_nil
+      parse('dcd').should be_nil
+      parse('dda').should be_nil
+      parse('ddb').should be_nil
+      parse('ddc').should be_nil
+      parse('ddd').should be_nil
+    end
+  end
+
 end
