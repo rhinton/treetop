@@ -16,11 +16,11 @@ module ParsingRuleSpec
       parser.send(:prepare_to_parse, 'baz')
       node_cache = parser.send(:node_cache)
     
-      node_cache[:bar][0].should be_nil
+      node_cache[:'Foo#bar'][0].should be_nil
     
       parser._nt_bar
     
-      cached_node = node_cache[:bar][0]        
+      cached_node = node_cache[:'Foo#bar'][0]
       cached_node.should be_an_instance_of(Runtime::SyntaxNode)
       cached_node.text_value.should == 'baz'
     

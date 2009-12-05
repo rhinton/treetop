@@ -2,7 +2,7 @@ module Treetop
   module Compiler
     class DeclarationSequence < Runtime::SyntaxNode
 
-      def compile(builder)
+      def compile(builder, context)
         unless rules.empty?
           builder.method_declaration("root") do
             builder << "@root || :#{rules.first.name}"
@@ -11,7 +11,7 @@ module Treetop
         end
         
         declarations.each do |declaration|
-          declaration.compile(builder)
+          declaration.compile(builder, context)
           builder.newline
         end
       end

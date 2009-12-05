@@ -162,9 +162,8 @@ module Treetop
             s4, i4 = [], index
             loop do
               if has_terminal?('\G[ \\t]', true, index)
-                next_character = index + input[index..-1].match(/\A(.)/um).end(1)
                 r5 = true
-                @index = next_character
+                @index += 1
               else
                 r5 = nil
               end
@@ -185,9 +184,8 @@ module Treetop
               s6, i6 = [], index
               loop do
                 if has_terminal?('\G[^\\n\\r]', true, index)
-                  next_character = index + input[index..-1].match(/\A(.)/um).end(1)
                   r7 = true
-                  @index = next_character
+                  @index += 1
                 else
                   r7 = nil
                 end
@@ -206,9 +204,8 @@ module Treetop
               s0 << r6
               if r6
                 if has_terminal?('\G[\\n\\r]', true, index)
-                  next_character = index + input[index..-1].match(/\A(.)/um).end(1)
                   r8 = true
-                  @index = next_character
+                  @index += 1
                 else
                   r8 = nil
                 end
@@ -290,9 +287,8 @@ module Treetop
           s1 << r3
           if r3
             if has_terminal?('\G[A-Z]', true, index)
-              next_character = index + input[index..-1].match(/\A(.)/um).end(1)
               r4 = true
-              @index = next_character
+              @index += 1
             else
               r4 = nil
             end
@@ -508,9 +504,8 @@ module Treetop
 
         i0, s0 = index, []
         if has_terminal?('\G[A-Z]', true, index)
-          next_character = index + input[index..-1].match(/\A(.)/um).end(1)
           r1 = true
-          @index = next_character
+          @index += 1
         else
           r1 = nil
         end
@@ -572,7 +567,7 @@ module Treetop
       end
 
       module DeclarationSequence3
-        def compile(builder)
+        def compile(builder, context)
         end
       end
 
@@ -681,7 +676,7 @@ module Treetop
       end
 
       module IncludeDeclaration1
-        def compile(builder)
+        def compile(builder, context)
           builder << text_value
         end
       end
@@ -708,9 +703,8 @@ module Treetop
           s0 << r2
           if r2
             if has_terminal?('\G[A-Z]', true, index)
-              next_character = index + input[index..-1].match(/\A(.)/um).end(1)
               r3 = true
-              @index = next_character
+              @index += 1
             else
               r3 = nil
             end
@@ -2200,9 +2194,8 @@ module Treetop
                   r6 = r8
                 else
                   if index < input_length
-                    next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-                    r9 = instantiate_node(SyntaxNode,input, index...next_character)
-                    @index = next_character
+                    r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                    @index += 1
                   else
                     terminal_parse_failure("any character")
                     r9 = nil
@@ -2325,9 +2318,8 @@ module Treetop
                   r6 = r8
                 else
                   if index < input_length
-                    next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-                    r9 = instantiate_node(SyntaxNode,input, index...next_character)
-                    @index = next_character
+                    r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                    @index += 1
                   else
                     terminal_parse_failure("any character")
                     r9 = nil
@@ -2452,9 +2444,8 @@ module Treetop
               s7 << r8
               if r8
                 if index < input_length
-                  next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-                  r9 = instantiate_node(SyntaxNode,input, index...next_character)
-                  @index = next_character
+                  r9 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
                 else
                   terminal_parse_failure("any character")
                   r9 = nil
@@ -2489,9 +2480,8 @@ module Treetop
                 s10 << r11
                 if r11
                   if index < input_length
-                    next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-                    r13 = instantiate_node(SyntaxNode,input, index...next_character)
-                    @index = next_character
+                    r13 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                    @index += 1
                   else
                     terminal_parse_failure("any character")
                     r13 = nil
@@ -2644,9 +2634,8 @@ module Treetop
               s5 << r6
               if r6
                 if index < input_length
-                  next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-                  r8 = instantiate_node(SyntaxNode,input, index...next_character)
-                  @index = next_character
+                  r8 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
                 else
                   terminal_parse_failure("any character")
                   r8 = nil
@@ -2873,9 +2862,8 @@ module Treetop
               i5, s5 = index, []
               i6 = index
               if has_terminal?('\G[{}]', true, index)
-                next_character = index + input[index..-1].match(/\A(.)/um).end(1)
                 r7 = true
-                @index = next_character
+                @index += 1
               else
                 r7 = nil
               end
@@ -2888,9 +2876,8 @@ module Treetop
               s5 << r6
               if r6
                 if index < input_length
-                  next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-                  r8 = instantiate_node(SyntaxNode,input, index...next_character)
-                  @index = next_character
+                  r8 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                  @index += 1
                 else
                   terminal_parse_failure("any character")
                   r8 = nil
@@ -3028,9 +3015,8 @@ module Treetop
         s0 << r1
         if r1
           if index < input_length
-            next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-            r3 = instantiate_node(SyntaxNode,input, index...next_character)
-            @index = next_character
+            r3 = instantiate_node(SyntaxNode,input, index...(index + 1))
+            @index += 1
           else
             terminal_parse_failure("any character")
             r3 = nil
@@ -3059,9 +3045,8 @@ module Treetop
         end
 
         if has_terminal?('\G[A-Za-z_]', true, index)
-          next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-          r0 = instantiate_node(SyntaxNode, input, index...next_character)
-          @index = next_character
+          r0 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
         else
           r0 = nil
         end
@@ -3085,9 +3070,8 @@ module Treetop
           r0 = r1
         else
           if has_terminal?('\G[0-9]', true, index)
-            next_character = index + input[index..-1].match(/\A(.)/um).end(1)
             r2 = true
-            @index = next_character
+            @index += 1
           else
             r2 = nil
           end
@@ -3189,9 +3173,8 @@ module Treetop
             s3 << r4
             if r4
               if index < input_length
-                next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-                r6 = instantiate_node(SyntaxNode,input, index...next_character)
-                @index = next_character
+                r6 = instantiate_node(SyntaxNode,input, index...(index + 1))
+                @index += 1
               else
                 terminal_parse_failure("any character")
                 r6 = nil
@@ -3236,9 +3219,8 @@ module Treetop
         end
 
         if has_terminal?('\G[ \\t\\n\\r]', true, index)
-          next_character = index + input[index..-1].match(/\A(.)/um).end(1)
-          r0 = instantiate_node(SyntaxNode, input, index...next_character)
-          @index = next_character
+          r0 = instantiate_node(SyntaxNode,input, index...(index + 1))
+          @index += 1
         else
           r0 = nil
         end

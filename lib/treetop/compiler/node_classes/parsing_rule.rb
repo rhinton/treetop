@@ -2,7 +2,10 @@ module Treetop
   module Compiler
     class ParsingRule < Runtime::SyntaxNode
 
-      def compile(builder)
+      attr_reader :cache_name
+
+      def compile(builder, context)
+        @cache_name = "'#{context.join('::')}\##{name}'"
         compile_inline_module_declarations(builder)
         generate_method_definition(builder)
       end
@@ -28,8 +31,6 @@ module Treetop
           builder.loop do
             parsing_expression.compile(expression_address, builder)
             builder.newline
-            generate_left_recursion_update(builder, result_var)
-            builder.newline
             generate_cache_storage(builder, result_var)
           end
           builder << "@stack.pop"
@@ -39,8 +40,8 @@ module Treetop
       end
       
       def generate_cache_lookup(builder)
-        builder.if_ "node_cache[:#{name}].has_key?(index)" do
-          builder.assign 'cached', "node_cache[:#{name}][index]"
+        builder.if_ "node_cache[:#{cache_name}].has_key?(index)" do
+          builder.assign 'cached', "node_cache[:#{cache_name}][index]"
           #builder << '@index = cached.interval.end if cached'
           #builder << 'return cached'
           builder.if__ "cached.kind_of? LeftRecursion" do
@@ -55,39 +56,18 @@ module Treetop
       end
       
       def generate_cache_left_recursion(builder)
-        builder.assign 'lrec', "@stack.push(:#{name})"
-        builder.assign "node_cache[:#{name}][index]", 'lrec'
-      end
-
-      def generate_left_recursion_update(builder, result_var)
-        builder.if_ 'lrec.active?' do
-          builder << 'lrec.report_to_parents if lrec.seed_parse?'
-          builder.if__ result_var do
-            builder.if__ "#{result_var}.interval.end > node_cache[:#{name}][start_index].interval.end" do
-              builder.assign 'lrec.state', ':grow_lr'
-              builder.assign '@index', 'start_index'
-              builder << 'lrec.uncache_involved_rules(node_cache, start_index)'
-            end
-            builder.else_ do
-              builder.assign 'lrec.state', ':no_recursion'
-              builder.assign result_var, "node_cache[:#{name}][start_index]"
-              builder.assign '@index', "#{result_var}.interval.end"
-              builder << 'lrec.restore_involved_rules(node_cache, start_index)'
-            end
-          end
-          builder.else_ do
-            builder.if_ '!lrec.seed_parse?' do
-              builder.assign result_var, "node_cache[:#{name}][start_index]"
-              builder.assign '@index', "#{result_var}.interval.end"
-              builder << 'lrec.restore_involved_rules(node_cache, start_index)'
-            end
-            builder.assign 'lrec.state', ':no_recursion'
-          end
-        end
+        builder.assign 'lrec', "@stack.push(:#{cache_name})"
+        builder.assign "node_cache[:#{cache_name}][index]", 'lrec'
       end
 
       def generate_cache_storage(builder, result_var)
-        builder.assign "node_cache[:#{name}][start_index]", result_var
+        builder.if__ 'lrec.active?' do
+          # any updates to cache and @index are performed in #left_recursion_update
+          builder.assign result_var, "left_recursion_update(lrec, start_index, #{result_var})"
+        end
+        builder.else_ do
+          builder.assign "node_cache[:#{cache_name}][start_index]", result_var
+        end
         builder << 'break unless lrec.active?'
       end
       

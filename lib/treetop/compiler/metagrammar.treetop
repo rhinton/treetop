@@ -41,7 +41,7 @@ module Treetop
         }
         /
         '' {
-          def compile(builder)
+          def compile(builder, context)
           end
         }
       end
@@ -52,7 +52,7 @@ module Treetop
       
       rule include_declaration
         'include' space [A-Z] (alphanumeric_char / '::')* {
-          def compile(builder)
+          def compile(builder, context)
             builder << text_value
           end
         }

@@ -106,6 +106,43 @@ module Treetop
         @terminal_failures << [index, expected_string]
         return nil
       end
+
+      def left_recursion_update(lrec, start_index, result)
+        # assume left recursion is active
+        lrec.report_to_parents if lrec.seed_parse?
+        if result
+          # growing left recursion produced a successful parse
+          if result.interval.end > node_cache[lrec.rule][start_index].interval.end
+            # new parse achieves progress in stream: continue growing
+            lrec.state = :grow_lr
+            @index = start_index
+            lrec.uncache_involved_rules(node_cache, start_index)
+            node_cache[lrec.rule][start_index] = result
+          else
+            # new parse is no better than previous parse: return previous
+            # result and terminate left recursion
+            lrec.state = :no_recursion
+            result = node_cache[lrec.rule][start_index]
+            @index = result.interval.end
+            lrec.restore_involved_rules(node_cache, start_index)
+          end
+        else
+          if lrec.seed_parse?
+            # seed parse failed: store total failure in cache and preempt recursion
+            node_cache[lrec.rule][start_index] = nil
+          else
+            # growing the last parse failed: return previus (successful) result
+            # from cache and terminate left recursion
+            result = node_cache[lrec.rule][start_index]
+            @index = result.interval.end
+            lrec.restore_involved_rules(node_cache, start_index)
+          end
+          lrec.state = :no_recursion
+        end
+
+        return result
+      end
+
     end
   end
 end
