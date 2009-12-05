@@ -68,6 +68,9 @@ module SequenceSpec
             def baz
               'override' + super.text_value
             end
+            def reverse_tokens
+              baz + bar.text_value + foo.text_value
+            end
           }
         end
 
@@ -82,6 +85,12 @@ module SequenceSpec
         result.foo.text_value.should == 'foo'
         result.bar.text_value.should == 'bar'
         result.baz.should == 'overridebaz'
+      end
+    end
+
+    it "can access methods that depend on methods for non-terminals" do
+      parse('foobarbaz') do |result|
+        result.reverse_tokens.should == 'overridebazbarfoo'
       end
     end
   end
